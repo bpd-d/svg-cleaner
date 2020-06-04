@@ -1,6 +1,8 @@
 import os
 import xml.etree.ElementTree as ET
 import re
+import sys
+import getopt
 
 basedir = "icons"
 notNeededTags = ['title', 'defs', 'namedview', 'metadata']
@@ -110,18 +112,33 @@ def adjust_file(f):
     return prepare_string(content.decode())
 
 
-def main():
+def main(argv):
     print("Init")
     here = os.path.abspath(os.path.dirname(__file__))
-    pathf = os.path.join(here, basedir)
+    inDir = os.path.join(here, basedir)
     outDir = os.path.join(here, 'out')
-    files = get_files(pathf)
+    try:
+        opts, args = getopt.getopt(argv, "hi:o:", ["input=", "output="])
+    except getopt.GetoptError:
+        print('main.py -i <inputfile> -o <outputfile>')
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt == '-h':
+            print('main.py -i <inputfile> -o <outputfile>')
+            sys.exit()
+        elif opt in ("-i", "--input"):
+            inDir = arg
+        elif opt in ("-o", "--output"):
+            outDir = arg
+    print('Input folder: ', inDir)
+    print('Output folder: ', outDir)
+    files = get_files(inDir)
     allFiles = dict()
     ET.register_namespace("", "http://www.w3.org/2000/svg")
     if files is not None:
         print(f'Found {len(files)} files')
         for f in files:
-            content = adjust_file(os.path.join(pathf, f))
+            content = adjust_file(os.path.join(inDir, f))
             print(f'Saving file {f}')
             savefile(os.path.join(outDir, f), content)
             allFiles[f] = content
@@ -135,4 +152,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1:])

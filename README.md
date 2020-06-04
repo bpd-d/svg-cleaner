@@ -7,9 +7,14 @@ Python 3 installed
 # Usage
 Run command
 ```
- **python main.py**
+ python main.py -i <InputFolder> -o <OutputFolder>
 ```
 
-Script will get all files from folder **icons**, convert them an leave in folder **out**
+For help call
+```
+python main.py -h
+```
+
+Script gets all files from given **input** or from **./icons** if input was not provided in command line, parse and saves modified in the **output** or folder **./out**
 
 
