@@ -64,11 +64,16 @@ def create_file_line(f, content):
     return f'"{f}":"{content}"'
 
 
+def create_file_line2(f, content):
+    ff = f.replace('-', '_')
+    return f'{ff}:"{content}"'
+
+
 def create_all_file(files):
     count = len(files)
     newF = "{"
     for index, (key, value) in enumerate(files.items()):
-        newF += create_file_line(key[:-4], value)
+        newF += create_file_line2(key[:-4], value)
         if index < count:
             newF += ","
         newF += "\n"
@@ -145,7 +150,7 @@ def main(argv):
         # Create all icons file
         print("Create js file")
         savefile(os.path.join(outDir, "all.js"),
-                 create_all_file_dict(allFiles))
+                 create_all_file(allFiles))
     else:
         print('No files found')
     print("Finish")
