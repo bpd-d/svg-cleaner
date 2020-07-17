@@ -7,7 +7,7 @@ Python 3 installed
 # Usage
 Run command
 ```
- python main.py -i <InputFolder> -o <OutputFolder>
+ python main.py - i <inputfile> -o <outputfile> -j -s -c
 ```
 
 For help call

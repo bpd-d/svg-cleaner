@@ -1,1 +1,1 @@
-python main.py
+python main.py -i "icons" -o "out" --clean --json

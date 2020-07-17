@@ -3,6 +3,7 @@ import xml.etree.ElementTree as ET
 import re
 import sys
 import getopt
+import shutil
 
 basedir = "icons"
 notNeededTags = ['title', 'defs', 'namedview', 'metadata']
@@ -19,6 +20,18 @@ def get_files(directory):
     if not directory:
         return None
     return os.listdir(directory)
+
+
+def cleanFolder(directory):
+    for filename in os.listdir(directory):
+        file_path = os.path.join(directory, filename)
+        try:
+            if os.path.isfile(file_path) or os.path.islink(file_path):
+                os.unlink(file_path)
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+        except Exception as e:
+            print('Failed to delete %s. Reason: %s' % (file_path, e))
 
 
 def savefile(f, content):
@@ -69,12 +82,20 @@ def create_file_line2(f, content):
     return f'{ff}:"{content}"'
 
 
-def create_all_file(files):
+def create_json_line(f, content):
+    ff = f.replace('-', '_')
+    return f'"{ff}":"{content}"'
+
+
+def create_all_file(files, json=False):
     count = len(files)
     newF = "{"
     for index, (key, value) in enumerate(files.items()):
-        newF += create_file_line2(key[:-4], value)
-        if index < count:
+        if (json == True):
+            newF += create_json_line(key[:-4], value)
+        else:
+            newF += create_file_line2(key[:-4], value)
+        if index < count - 1:
             newF += ","
         newF += "\n"
     newF += "}"
@@ -86,7 +107,7 @@ def create_all_file_dict(files):
     newF = "["
     for index, (key, value) in enumerate(files.items()):
         newF += '{ key: \"' + key[:-4] + '\", value: \"' + value+'\"}'
-        if index < count:
+        if index < count - 1:
             newF += ","
         newF += "\n"
     newF += "]"
@@ -122,25 +143,39 @@ def main(argv):
     here = os.path.abspath(os.path.dirname(__file__))
     inDir = os.path.join(here, basedir)
     outDir = os.path.join(here, 'out')
+    isJson = False
+    isJs = False
+    cleanOutDir = False
     try:
-        opts, args = getopt.getopt(argv, "hi:o:", ["input=", "output="])
+        opts, args = getopt.getopt(
+            argv, "jcshi:o:", ["input=", "output=", "js", "json", "clean"])
     except getopt.GetoptError:
-        print('main.py -i <inputfile> -o <outputfile>')
+        print('main.py - i <inputfile> -o <outputfile> -j -s -c')
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            print('main.py -i <inputfile> -o <outputfile>')
+            print(
+                'main.py -i <inputfile> -o <outputfile> -j -s \n -i [ --input=] Input folder \n -o [ --output=] Output folder \n -j [ --json] Create json file \n -s [ --js] Create JS file \n -c [ --clean] Clean output folder before conversion')
             sys.exit()
         elif opt in ("-i", "--input"):
             inDir = arg
         elif opt in ("-o", "--output"):
             outDir = arg
+        elif opt in ("-j", "--json"):
+            isJson = True
+        elif opt in ("-s", "--js"):
+            isJs = True
+        elif opt in ("-c", "--clean"):
+            cleanOutDir = True
     print('Input folder: ', inDir)
     print('Output folder: ', outDir)
     files = get_files(inDir)
     allFiles = dict()
     ET.register_namespace("", "http://www.w3.org/2000/svg")
     if files is not None:
+        if cleanOutDir:
+            print(f'Clean out directory')
+            cleanFolder(outDir)
         print(f'Found {len(files)} files')
         for f in files:
             content = adjust_file(os.path.join(inDir, f))
@@ -148,9 +183,14 @@ def main(argv):
             savefile(os.path.join(outDir, f), content)
             allFiles[f] = content
         # Create all icons file
-        print("Create js file")
-        savefile(os.path.join(outDir, "all.js"),
-                 create_all_file(allFiles))
+        if isJs:
+            print("Create js file")
+            savefile(os.path.join(outDir, "all.js"),
+                     create_all_file(allFiles))
+        if isJson:
+            print("Create json file")
+            savefile(os.path.join(outDir, "all.json"),
+                     create_all_file(allFiles, True))
     else:
         print('No files found')
     print("Finish")
